@@ -46,24 +46,20 @@ async function updateUsageData() {
       return;
     }
 
-    // Create a new window with the usage page (minimized/hidden)
-    const win = await api.windows.create({
+    // Create a background tab (not a popup window — Firefox ignores minimized state)
+    const tab = await api.tabs.create({
       url: 'https://claude.ai/settings/usage',
-      type: 'popup',
-      state: 'minimized',
-      width: 800,
-      height: 600,
-      focused: false
+      active: false
     });
 
-    // Safety timeout: close window after 10 seconds even if no data received
+    // Safety timeout: close tab after 15 seconds even if no data received
     setTimeout(async () => {
       try {
-        await api.windows.remove(win.id);
+        await api.tabs.remove(tab.id);
       } catch (e) {
-        // Window might be already closed by onMessage handler
+        // Tab might already be closed
       }
-    }, 10000);
+    }, 15000);
 
   } catch (error) {
     console.error('Error updating usage:', error);
@@ -87,13 +83,9 @@ api.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
       checkAndNotify(data.percent);
 
-      // Close the minimized popup window as soon as data is received
+      // Close the background tab as soon as data is received
       if (sender.tab) {
-        api.windows.get(sender.tab.windowId).then((win) => {
-          if (win && win.state === 'minimized' && win.type === 'popup') {
-            api.windows.remove(win.id).catch(() => {});
-          }
-        }).catch(() => {});
+        api.tabs.remove(sender.tab.id).catch(() => {});
       }
     } else {
       api.browserAction.setBadgeText({ text: '?' });
