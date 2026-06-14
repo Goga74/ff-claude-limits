@@ -36,7 +36,7 @@
   },
   "browser_specific_settings": {
     "gecko": {
-      "id": "0tokens@igor-zamiatin",
+      "id": "claude-limits@igor-zamiatin",
       "strict_min_version": "109.0"
     }
   }
